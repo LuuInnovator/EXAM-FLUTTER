@@ -1,4 +1,8 @@
+// lib/main.dart
+
 import 'package:flutter/material.dart';
+import 'package:diacritic/diacritic.dart'; // Import thư viện diacritic
+import 'image_urls.dart'; // Import file ảnh
 
 void main() {
   runApp(MyApp());
@@ -24,10 +28,10 @@ class HomePage extends StatefulWidget {
 
 class _HomePageState extends State<HomePage> {
   List<Destination> destinations = [
-    Destination(name: 'Hà Nội', rating: 4.7, imageUrl: 'https://images.unsplash.com/photo-1507512070204-5f1b4e1dbd6c?crop=entropy&cs=tinysrgb&fit=max&fm=jpg&ixid=MnwxMTc3M3wwfDF8c2VhcmNofDF8fGhhJTIwbm9pJTIwYmF0aCUyMGNhbnRlcnxlbnwwfHx8fDE2MjQ0NzE5NzY&ixlib=rb-1.2.1&q=80&w=400'),
-    Destination(name: 'Đà Nẵng', rating: 4.5, imageUrl: 'https://images.unsplash.com/photo-1522419117884-d3ae00b27000?crop=entropy&cs=tinysrgb&fit=max&fm=jpg&ixid=MnwxMTc3M3wwfDF8c2VhcmNofDMyfHxkYW5hbmd8ZW58MHx8fHwxNjI0NDcxOTc2&ixlib=rb-1.2.1&q=80&w=400'),
-    Destination(name: 'Nha Trang', rating: 4.6, imageUrl: 'https://images.unsplash.com/photo-1519949651368-97f3d44f265c?crop=entropy&cs=tinysrgb&fit=max&fm=jpg&ixid=MnwxMTc3M3wwfDF8c2VhcmNofDE1fHxuaGF0cmFuZ3xlbnwwfHx8fDE2MjQ0NzE5NzY&ixlib=rb-1.2.1&q=80&w=400'),
-    Destination(name: 'Phú Quốc', rating: 4.8, imageUrl: 'https://images.unsplash.com/photo-1560807702-9c3e9a0d4b76?crop=entropy&cs=tinysrgb&fit=max&fm=jpg&ixid=MnwxMTc3M3wwfDF8c2VhcmNofDJ8fHBodSUyMHF1b3xlbnwwfHx8fDE2MjQ0NzE5NzY&ixlib=rb-1.2.1&q=80&w=400'),
+    Destination(name: 'Hà Nội', rating: 4.7, imageUrl: ImageUrls.haNoi),
+    Destination(name: 'Đà Nẵng', rating: 4.5, imageUrl: ImageUrls.daNang),
+    Destination(name: 'Nha Trang', rating: 4.6, imageUrl: ImageUrls.nhaTrang),
+    Destination(name: 'Phú Quốc', rating: 4.8, imageUrl: ImageUrls.phuQuoc),
   ];
 
   List<Destination> filteredDestinations = [];
@@ -40,15 +44,20 @@ class _HomePageState extends State<HomePage> {
   }
 
   void filterDestinations(String query) {
+    // Loại bỏ dấu khỏi chuỗi tìm kiếm
+    final normalizedQuery = removeDiacritics(query.toLowerCase());
+
     if (query.isEmpty) {
       setState(() {
-        filteredDestinations = destinations; // Nếu ô tìm kiếm trống, hiển thị tất cả
+        filteredDestinations = destinations;
       });
     } else {
       setState(() {
         filteredDestinations = destinations
-            .where((destination) => destination.name.toLowerCase().contains(query.toLowerCase()))
-            .toList(); // Lọc theo tên địa điểm
+            .where((destination) =>
+            removeDiacritics(destination.name.toLowerCase())
+                .contains(normalizedQuery))
+            .toList();
       });
     }
   }
@@ -60,57 +69,54 @@ class _HomePageState extends State<HomePage> {
         title: Text('Hi Guy!'),
         backgroundColor: Colors.purple,
       ),
-      body: SingleChildScrollView(
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            Padding(
-              padding: const EdgeInsets.all(16.0),
-              child: Text(
-                'Where are you going next?',
-                style: TextStyle(fontSize: 24, fontWeight: FontWeight.bold),
-              ),
+      body: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Padding(
+            padding: const EdgeInsets.all(16.0),
+            child: Text(
+              'Where are you going next?',
+              style: TextStyle(fontSize: 24, fontWeight: FontWeight.bold),
             ),
-            Padding(
-              padding: const EdgeInsets.symmetric(horizontal: 16.0),
-              child: TextField(
-                controller: searchController,
-                onChanged: filterDestinations, // Gọi hàm lọc khi người dùng nhập
-                decoration: InputDecoration(
-                  hintText: 'Search your destination',
-                  border: OutlineInputBorder(
-                    borderRadius: BorderRadius.circular(30),
-                    borderSide: BorderSide.none,
-                  ),
-                  filled: true,
-                  fillColor: Colors.grey[200],
-                  contentPadding: EdgeInsets.symmetric(vertical: 15, horizontal: 20),
-                  suffixIcon: Icon(Icons.search, color: Colors.purple),
+          ),
+          Padding(
+            padding: const EdgeInsets.symmetric(horizontal: 16.0),
+            child: TextField(
+              controller: searchController,
+              onChanged: filterDestinations,
+              decoration: InputDecoration(
+                hintText: 'Search your destination',
+                border: OutlineInputBorder(
+                  borderRadius: BorderRadius.circular(30),
+                  borderSide: BorderSide.none,
                 ),
+                filled: true,
+                fillColor: Colors.grey[200],
+                contentPadding: EdgeInsets.symmetric(vertical: 15, horizontal: 20),
+                suffixIcon: Icon(Icons.search, color: Colors.purple),
               ),
             ),
-            Padding(
-              padding: const EdgeInsets.all(16.0),
-              child: Text(
-                'Popular Destinations',
-                style: TextStyle(fontSize: 24, fontWeight: FontWeight.bold),
-              ),
+          ),
+          Padding(
+            padding: const EdgeInsets.all(16.0),
+            child: Text(
+              'Popular Destinations',
+              style: TextStyle(fontSize: 24, fontWeight: FontWeight.bold),
             ),
-            Container(
-              height: 350, // Chiều cao cho vùng "Popular Destination"
-              child: ListView.builder(
-                itemCount: filteredDestinations.length,
-                itemBuilder: (context, index) {
-                  return DestinationCard(
-                    name: filteredDestinations[index].name,
-                    rating: filteredDestinations[index].rating,
-                    imageUrl: filteredDestinations[index].imageUrl,
-                  );
-                },
-              ),
+          ),
+          Flexible( // Sử dụng Flexible để chiếm không gian còn lại
+            child: ListView.builder(
+              itemCount: filteredDestinations.length,
+              itemBuilder: (context, index) {
+                return DestinationCard(
+                  name: filteredDestinations[index].name,
+                  rating: filteredDestinations[index].rating,
+                  imageUrl: filteredDestinations[index].imageUrl,
+                );
+              },
             ),
-          ],
-        ),
+          ),
+        ],
       ),
     );
   }
@@ -142,13 +148,23 @@ class DestinationCard extends StatelessWidget {
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          ClipRRect(
-            borderRadius: BorderRadius.vertical(top: Radius.circular(15)),
-            child: Image.network(
-              imageUrl,
-              height: 150,
-              width: double.infinity,
-              fit: BoxFit.cover,
+          GestureDetector(
+            onTap: () {
+              Navigator.push(
+                context,
+                MaterialPageRoute(
+                  builder: (context) => ImageScreen(imageUrl: imageUrl),
+                ),
+              );
+            },
+            child: ClipRRect(
+              borderRadius: BorderRadius.vertical(top: Radius.circular(15)),
+              child: Image.network(
+                imageUrl,
+                height: 150,
+                width: double.infinity,
+                fit: BoxFit.cover,
+              ),
             ),
           ),
           Padding(
@@ -166,6 +182,25 @@ class DestinationCard extends StatelessWidget {
             ),
           ),
         ],
+      ),
+    );
+  }
+}
+
+// Màn hình hiển thị ảnh lớn
+class ImageScreen extends StatelessWidget {
+  final String imageUrl;
+
+  ImageScreen({required this.imageUrl});
+
+  @override
+  Widget build(BuildContext context) {
+    return Scaffold(
+      appBar: AppBar(
+        title: Text('Image'),
+      ),
+      body: Center(
+        child: Image.network(imageUrl),
       ),
     );
   }
